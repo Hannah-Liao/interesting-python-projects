@@ -1,3 +1,4 @@
+import json
 from tkinter import *
 from tkinter import messagebox
 from random import choice, randint, shuffle
@@ -30,6 +31,12 @@ def save():
     website1 = website_entry.get()
     email1 = email_entry.get()
     password1 = password_entry.get()
+    new_data = {
+        website1: {
+            "email": email1,
+            "password": password1
+        }
+    }
 
     if len(website1) == 0 or len(password1) == 0:
         messagebox.showinfo(title="Oops", message="Please make sure you have not left any fields empty.")
@@ -38,10 +45,35 @@ def save():
                                        message=f"These are the details entered: \n {website1} | {email1} | {password1} \n Is it ok to save?")
 
         if is_ok:
-            with open("data.txt", "a") as data_file:
-                data_file.write(f"{website1} | {email1} | {password1} \n")
+            try:
+                with open("data.json", "r") as data_file:
+                    data = json.load(data_file)
+            except FileNotFoundError:
+                with open("data.json", "w") as data_file:
+                    json.dump(new_data, data_file, indent=4)
+            else:
+                data.update(new_data)
+                with open("data.json", "w") as data_file:
+                        json.dump(data, data_file, indent=4)
+            finally:
                 website_entry.delete(0, END)
                 password_entry.delete(0, END)
+
+
+# ---------------------------- FIND PASSWORD ------------------------------- #
+def find_password():
+    website2 = website_entry.get()
+
+    try:
+        with open("data.json", "r") as data_file:
+            data = json.load(data_file)
+    except FileNotFoundError:
+        messagebox.showinfo(title="Not Found",message="No Data File Found")
+    else:
+        if website2 in data:
+            messagebox.showinfo(title=f"{website2}", message=f"email: {data[website2]['email']} \n password: {data[website2]['password']}")
+        else:
+            messagebox.showinfo(title="Not Found", message=f"No details for the website {website2} exits")
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -57,8 +89,11 @@ canvas.grid(column=1, row=0)
 website = Label(text="Website:")
 website.grid(column=0, row=1)
 
-website_entry = Entry(width=39)
-website_entry.grid(column=1, row=1, columnspan=2)
+website_entry = Entry(width=22)
+website_entry.grid(column=1, row=1)
+
+search_btn = Button(width=12, text="Search", command=find_password)
+search_btn.grid(column=2, row=1)
 
 email = Label(text="Email/Username:")
 email.grid(column=0, row=2)
